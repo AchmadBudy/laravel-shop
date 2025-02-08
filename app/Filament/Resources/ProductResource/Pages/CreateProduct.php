@@ -16,6 +16,7 @@ class CreateProduct extends CreateRecord
         $data['discount'] = $data['discount'] ?? null;
         $data['original_price'] = $data['price'];
         $data['price'] = $data['price'] - $data['discount'];
+        $data['quantity'] = $data['quantity'] ?? 0;
 
         // check if guarantee is empty
         if (empty($data['guarantee'])) {

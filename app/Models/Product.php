@@ -32,6 +32,15 @@ class Product extends Model
         'type' => \App\Enums\ProductTypeEnum::class,
     ];
 
+
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
     /**
      * Scope a query to only include active products.
      */
@@ -43,7 +52,7 @@ class Product extends Model
 
     public function categories(): BelongsToMany
     {
-        return $this->belongsToMany(Category::class, 'product_categories');
+        return $this->belongsToMany(Category::class, 'product_categories', 'product_id', 'category_id');
     }
 
     public function productDownloads(): HasMany
@@ -59,5 +68,10 @@ class Product extends Model
     public function productPrivate(): HasMany
     {
         return $this->hasMany(ProductPrivate::class);
+    }
+
+    public function detailTransactions(): HasMany
+    {
+        return $this->hasMany(TransactionDetail::class);
     }
 }

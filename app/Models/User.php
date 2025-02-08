@@ -57,4 +57,9 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->role === \App\Enums\RoleEnum::Admin;
     }
+
+    public function carts()
+    {
+        return $this->hasMany(Cart::class);
+    }
 }
