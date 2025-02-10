@@ -5,9 +5,12 @@ namespace App\Livewire;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Products extends Component
 {
+    use WithPagination;
+
     #[Url(except: '')]
     public string $search = '';
 
@@ -20,6 +23,12 @@ class Products extends Component
     {
         $this->search = '';
         $this->category = '';
+        $this->resetPage();
+    }
+
+    public function updated()
+    {
+        $this->resetPage();
     }
 
     public function render()
@@ -34,7 +43,7 @@ class Products extends Component
                 }])
                 ->withCount(['detailTransactions' => fn($query) => $query->select(DB::raw('COALESCE(sum(quantity), 0) as total_quantity'))])
                 ->latest()
-                ->get(),
+                ->paginate(9),
             'categories' => \App\Models\Category::select('slug', 'name')
                 ->latest()
                 ->get()

@@ -14,8 +14,16 @@ class TransactionDetail extends Model
         'product_type',
         'total_price',
         'price_each',
-        'price_each_discount',
+        'price_each_original',
         'quantity',
+    ];
+
+    protected $casts = [
+        'price_each' => 'integer',
+        'price_each_original' => 'integer',
+        'total_price' => 'integer',
+        'quantity' => 'integer',
+        'product_type' => \App\Enums\ProductTypeEnum::class,
     ];
 
     public function transaction(): BelongsTo
@@ -30,16 +38,16 @@ class TransactionDetail extends Model
 
     public function productDownload(): BelongsToMany
     {
-        return $this->belongsToMany(ProductDownload::class, 'product_download_transactions');
+        return $this->belongsToMany(ProductDownload::class, 'product_download_transactions')->withTimestamps();
     }
 
     public function productShared(): BelongsToMany
     {
-        return $this->belongsToMany(ProductShared::class, 'product_shared_transactions');
+        return $this->belongsToMany(ProductShared::class, 'product_shared_transactions')->withTimestamps();
     }
 
     public function productPrivate(): BelongsToMany
     {
-        return $this->belongsToMany(ProductPrivate::class, 'product_private_transactions');
+        return $this->belongsToMany(ProductPrivate::class, 'product_private_transactions')->withTimestamps();
     }
 }

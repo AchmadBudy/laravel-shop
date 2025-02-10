@@ -118,10 +118,16 @@
                                 </div>
                             @endif
                         </div>
-                        <button class="py-2 mt-3 btn btn-primary w-100" wire:click="addToCart"
-                            wire:loading.attr="disabled">
-                            <i class="bi bi-cart"></i> Tambah ke Keranjang
-                        </button>
+                        <div class="gap-2 d-flex">
+                            <a class="py-2 mt-3 btn btn-success flex-grow-1" wire:navigate
+                                href="{{ route('quick-checkout', ['product' => $product->slug]) }}">
+                                Beli Sekarang
+                            </a>
+                            {{-- <button class="py-2 mt-3 btn btn-primary" wire:click="addToCart"
+                                wire:loading.attr="disabled">
+                                <i class="bi bi-cart"></i> Tambah ke Keranjang
+                            </button> --}}
+                        </div>
                     @else
                         <button class="py-2 btn btn-secondary w-100" disabled>
                             Stok Habis

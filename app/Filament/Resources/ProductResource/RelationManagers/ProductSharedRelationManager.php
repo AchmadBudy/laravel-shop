@@ -58,7 +58,7 @@ class ProductSharedRelationManager extends RelationManager
                         return $data;
                     })
                     ->using(function (Action $action, array $data, string $model): Model {
-                        return $this->ownerRecord->productShared()->create($data);
+                        return $this->createItems($data, $this->ownerRecord, $action);
                     }),
             ])
             ->actions([
@@ -82,11 +82,24 @@ class ProductSharedRelationManager extends RelationManager
         DB::beginTransaction();
         try {
             // Lock and update quantity
-            $lockedRecord = $ownerRecord->lockForUpdate()->first();
-            $lockedRecord->quantity += $data['limit'];
-            $lockedRecord->save();
+            $lockedRecord = \App\Models\Product::lockForUpdate()->find($ownerRecord->id);
+            logger($lockedRecord->quantity);
 
-            $ownerRecord->productPrivate()->create($data);
+            $lockedRecord->update([
+                'quantity' => $lockedRecord->quantity + $data['limit'],
+            ]);
+
+            logger($lockedRecord->quantity);
+            logger($lockedRecord);
+
+
+            $ownerRecord->productShared()->create([
+                'item' => $data['item'],
+                'limit' => $data['limit'],
+                'used_count' => $data['used_count'],
+                'is_active' => $data['is_active'],
+            ]);
+
 
             DB::commit();
 

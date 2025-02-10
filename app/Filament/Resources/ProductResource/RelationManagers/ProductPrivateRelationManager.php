@@ -114,7 +114,7 @@ class ProductPrivateRelationManager extends RelationManager
             }
 
             // Lock and update quantity
-            $lockedRecord = $ownerRecord->lockForUpdate()->first();
+            $lockedRecord = \App\Models\Product::lockForUpdate()->find($ownerRecord->id);
             $lockedRecord->quantity += count($dataToInsert);
             $lockedRecord->save();
 

@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Product;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
@@ -93,7 +94,7 @@ class ProductDetail extends Component
             ->load(['categories' => function ($query) {
                 $query->select('categories.name');
             }])
-            ->loadCount(['detailTransactions' => fn($query) => $query->selectRaw('COALESCE(sum(quantity), 0) as total_quantity')]);
+            ->loadCount(['detailTransactions' => fn($query) => $query->select(DB::raw('COALESCE(sum(quantity), 0) as total_quantity'))]);
 
         // check if product is not active
         if (!$this->product->is_active) {
@@ -111,6 +112,7 @@ class ProductDetail extends Component
         if ($this->stockCount < 1) {
             $this->stockCount = 1;
         }
+
         return view('livewire.product-detail');
     }
 }

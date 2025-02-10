@@ -16,6 +16,8 @@ class Transaction extends Model
         'email',
         'payment_method',
         'payment_status',
+        'payment_url',
+        'payment_provider_reference',
         'paid_at',
     ];
 
@@ -29,7 +31,7 @@ class Transaction extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function transactionDetail()
+    public function transactionDetails()
     {
         return $this->hasMany(TransactionDetail::class);
     }

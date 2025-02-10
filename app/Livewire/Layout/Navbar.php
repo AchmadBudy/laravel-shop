@@ -18,12 +18,8 @@ class Navbar extends Component
         return $this->redirect(route('index'), navigate: true);
     }
 
-    #[On("cartUpdated")]
-    #[On("addToCart")]
     public function render()
     {
-        return view('livewire.layout.navbar', [
-            'cartCount' => Auth::user()?->carts->sum('quantity') ?? 0,
-        ]);
+        return view('livewire.layout.navbar');
     }
 }

@@ -35,12 +35,12 @@
 
             <!-- Right Navigation -->
             <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
+                {{-- <li class="nav-item">
                     <a class="nav-link" href="{{ route('cart') }}" wire:navigate>
                         <i class="bi bi-cart"></i>
                         <span class="badge bg-danger">{{ $cartCount }}</span>
                     </a>
-                </li>
+                </li> --}}
                 <!-- Kondisi Sudah Login -->
                 @auth
                     <li class="nav-item dropdown">
@@ -49,11 +49,13 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li>
-                                <a class="dropdown-item" href="#"><i class="bi bi-pencil-square"></i>
+                                <a class="dropdown-item" href="{{ route('profile') }}" wire:navigate><i
+                                        class="bi bi-pencil-square"></i>
                                     Edit Profil</a>
                             </li>
                             <li>
-                                <a class="dropdown-item" href="#"><i class="bi bi-box-seam"></i> Pesanan
+                                <a class="dropdown-item" href="{{ route('orders') }}" wire:navigate><i
+                                        class="bi bi-box-seam"></i> Pesanan
                                     Saya</a>
                             </li>
                             <li>

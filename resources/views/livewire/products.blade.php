@@ -35,8 +35,8 @@
         <!-- Daftar Produk -->
         <div class="col-md-9">
             <div class="mb-4 d-flex justify-content-between align-items-center">
-                <h4>Menampilkan 120 produk</h4>
-                <div class="dropdown">
+                <h4>Menampilkan {{ $products->count() }} produk</h4>
+                {{-- <div class="dropdown">
                     <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                         Urutkan berdasarkan
                     </button>
@@ -54,12 +54,23 @@
                             <a class="dropdown-item" href="#">Terlaris</a>
                         </li>
                     </ul>
+                </div> --}}
+            </div>
+
+
+            <!-- Loading Indicator -->
+
+            <div class="text-center" wire:loading wire:target="search,category,resetFilters">
+                <div class="p-3 d-flex align-items-center justify-content-center">
+                    <div class="spinner-border spinner-border-sm text-primary me-2">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span>Memuat data...</span>
                 </div>
             </div>
 
-            <div class="row g-4">
-                <!-- Product Card -->
-                @foreach ($products as $product)
+            <div class="row g-4" wire:loading.remove wire:target="search,category,resetFilters">
+                @forelse ($products as $product)
                     <div class="col-6 col-md-4">
                         <a href="{{ route('product.detail', $product->slug) }}" class="text-decoration-none"
                             wire:navigate>
@@ -115,7 +126,13 @@
                             </div>
                         </a>
                     </div>
-                @endforeach
+                @empty
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            Produk tidak ditemukan.
+                        </div>
+                    </div>
+                @endforelse
 
                 {{-- <!-- Ulangi product card lainnya -->
                 <div class="col-6 col-md-4">
@@ -190,23 +207,7 @@
 
             <!-- Pagination -->
             <nav class="mt-5">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item disabled">
-                        <a class="page-link" href="#">Previous</a>
-                    </li>
-                    <li class="page-item active">
-                        <a class="page-link" href="#">1</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">2</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">3</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">Next</a>
-                    </li>
-                </ul>
+                {{ $products->links() }}
             </nav>
         </div>
     </div>

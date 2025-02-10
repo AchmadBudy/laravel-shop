@@ -17,11 +17,11 @@ enum ProductTypeEnum: string implements HasLabel, HasColor, HasIcon
     public function getLabel(): string
     {
         return match ($this) {
-            self::Private => 'Private',
-            self::Shared => 'Shared',
+            self::Private => 'Account Private',
+            self::Shared => 'Account Shared',
             self::Download => 'Download',
-            self::Api => 'API',
-            self::Manual => 'Manual',
+            self::Api => 'AutoMatic',
+            self::Manual => 'Manual Delivery',
         };
     }
 
@@ -33,6 +33,17 @@ enum ProductTypeEnum: string implements HasLabel, HasColor, HasIcon
             self::Download => 'green',
             self::Api => 'yellow',
             self::Manual => 'purple',
+        };
+    }
+
+    public function getBootstrapColor(): string
+    {
+        return match ($this) {
+            self::Private => 'secondary',
+            self::Shared => 'primary',
+            self::Download => 'success',
+            self::Api => 'warning',
+            self::Manual => 'info',
         };
     }
 

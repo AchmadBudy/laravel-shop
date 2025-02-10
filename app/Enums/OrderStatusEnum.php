@@ -11,6 +11,7 @@ enum OrderStatusEnum: string implements HasLabel, HasColor, HasIcon
     case Unpaid = 'unpaid';         // Order dibuat, pembayaran belum dilakukan
     case Pending = 'pending';       // Pembayaran sedang diverifikasi (contoh: transfer bank)
     case Paid = 'paid';             // Pembayaran dikonfirmasi lunas
+    case Expired = 'expired';       // Waktu pembayaran habis
     case Processing = 'processing'; // Sedang diproses (otomatis/manual)
     case Completed = 'completed';   // Produk berhasil dikirim
     case Failed = 'failed';         // Gagal mengirim produk (perlu tindakan manual)
@@ -23,7 +24,8 @@ enum OrderStatusEnum: string implements HasLabel, HasColor, HasIcon
         return match ($this) {
             self::Unpaid => 'Belum Bayar',
             self::Pending => 'Verifikasi Pembayaran',
-            self::Paid => 'Terkonfirmasi',
+            self::Paid => 'Pembayaran Terkonfirmasi',
+            self::Expired => 'Pembayaran Kadaluarsa',
             self::Processing => 'Sedang Diproses',
             self::Completed => 'Selesai',
             self::Failed => 'Gagal',
@@ -39,6 +41,7 @@ enum OrderStatusEnum: string implements HasLabel, HasColor, HasIcon
             self::Unpaid => 'gray',
             self::Pending => 'yellow',
             self::Paid => 'green',
+            self::Expired => 'red',
             self::Processing => 'blue',
             self::Completed => 'purple',
             self::Failed => 'red',
@@ -54,12 +57,29 @@ enum OrderStatusEnum: string implements HasLabel, HasColor, HasIcon
             self::Unpaid => 'heroicon-o-x-circle',
             self::Pending => 'heroicon-o-clock',
             self::Paid => 'heroicon-o-currency-dollar',
+            self::Expired => 'heroicon-o-clock',
             self::Processing => 'heroicon-o-cog-6-tooth',
             self::Completed => 'heroicon-o-check-badge',
             self::Failed => 'heroicon-o-exclamation-triangle',
             self::OnHold => 'heroicon-o-pause-circle',
             self::Cancelled => 'heroicon-o-no-symbol',
             self::Refunded => 'heroicon-o-arrow-uturn-left',
+        };
+    }
+
+    public function getBootstrapColor(): string
+    {
+        return match ($this) {
+            self::Unpaid => 'secondary',
+            self::Pending => 'warning',
+            self::Paid => 'success',
+            self::Expired => 'danger',
+            self::Processing => 'info',
+            self::Completed => 'primary',
+            self::Failed => 'danger',
+            self::OnHold => 'warning',
+            self::Cancelled => 'danger',
+            self::Refunded => 'pink',
         };
     }
 }
