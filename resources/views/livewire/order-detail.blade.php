@@ -80,7 +80,11 @@
                                         @php
                                             $items = '';
                                             foreach ($detail->productShared as $item) {
-                                                $items .= $item->item . PHP_EOL;
+                                                $items .=
+                                                    $item->item .
+                                                    ' | Batasan Penggunaan : ' .
+                                                    $item->pivot->used_count .
+                                                    PHP_EOL;
                                             }
                                         @endphp
                                         <textarea class="form-control" rows="10" readonly>{{ $items }}</textarea>

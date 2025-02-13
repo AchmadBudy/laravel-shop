@@ -43,7 +43,7 @@ class TransactionDetail extends Model
 
     public function productShared(): BelongsToMany
     {
-        return $this->belongsToMany(ProductShared::class, 'product_shared_transactions')->withTimestamps();
+        return $this->belongsToMany(ProductShared::class, 'product_shared_transactions')->withTimestamps()->withPivot('used_count');
     }
 
     public function productPrivate(): BelongsToMany

@@ -91,7 +91,12 @@ class PaymentService
             switch ($product->type) {
                 case \App\Enums\ProductTypeEnum::Shared:
                     $productItem = $this->getSharedItem($productId, $quantity);
-                    $transactionDetail->productShared()->attach($productItem->id);
+                    $productItemForAttach = $productItem->mapWithKeys(function ($item) {
+                        return [$item['id'] => ['used_count' => $item['taken']]];
+                    })->toArray();
+
+                    $transactionDetail->productShared()->attach($productItemForAttach);
+
                     break;
                 case \App\Enums\ProductTypeEnum::Private:
                     $productItem = $this->getPrivateItem($productId, $quantity);
@@ -123,6 +128,7 @@ class PaymentService
             $transaction->update([
                 'payment_url' => $response['data']['data']['checkout_url'],
                 'payment_provider_reference' => $response['data']['data']['reference'],
+                'payment_qr_url' => $response['data']['data']['qr_url'] ?? null,
             ]);
 
             DB::commit();
@@ -133,7 +139,7 @@ class PaymentService
             ];
         } catch (\Throwable $th) {
             DB::rollBack();
-
+            logger($th->getMessage());
 
             return [
                 'success' => false,
@@ -181,18 +187,49 @@ class PaymentService
      */
     private function getSharedItem(string $productId, int $quantity): object
     {
-        $productItem = ProductShared::where('product_id', $productId)
+        $productItems = ProductShared::where('product_id', $productId)
             ->where('is_active', true)
             ->where('used_count', '<', 'limit')
             ->lockForUpdate()
-            ->first();
+            ->get();
 
-        // update the product item
-        $productItem->update([
-            'used_count' => $productItem->used_count + $quantity,
-        ]);
+        $remainingQuantity = $quantity;
+        $usedItems = collect([]);
 
-        return $productItem;
+        foreach ($productItems as $item) {
+            $available = $item->limit - $item->used_count;
+            if ($available <= 0) {
+                continue;
+            }
+
+            // Hitung jumlah yang akan diambil dari item ini
+            $taken = min($available, $remainingQuantity);
+
+            // Update used_count
+            $item->update([
+                'used_count' => $item->used_count + $taken,
+            ]);
+
+            // Simpan item yang sudah diambil
+            $usedItems->push([
+                'id' => $item->id,
+                'taken' => $taken,
+            ]);
+
+            // Kurangi sisa quantity yang harus diambil
+            $remainingQuantity -= $taken;
+
+            // Jika sisa quantity sudah 0, berhenti
+            if ($remainingQuantity <= 0) {
+                break;
+            }
+        }
+
+        if ($remainingQuantity > 0) {
+            throw new \Exception('Product quantity is not enough');
+        }
+
+        return $usedItems;
     }
 
     /**

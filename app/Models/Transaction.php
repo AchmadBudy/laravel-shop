@@ -19,6 +19,7 @@ class Transaction extends Model
         'payment_url',
         'payment_provider_reference',
         'paid_at',
+        'payment_qr_url'
     ];
 
     protected $casts = [
