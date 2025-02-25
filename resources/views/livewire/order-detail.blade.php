@@ -44,8 +44,8 @@
             @if ($transaction->payment_status == \App\Enums\OrderStatusEnum::Completed)
                 @forelse ($transaction->transactionDetails as $detail)
                     @if ($detail->product_type == \App\Enums\ProductTypeEnum::Private)
-                        <!-- Tipe 1: Akun Premium -->
-                        <div class="mb-4 shadow-sm card" id="accountType">
+                        <!-- Tipe 1: Akunprivate  Premium -->
+                        <div class="mb-4 shadow-sm card">
                             <div class="card-body">
                                 <h5 class="mb-4">
                                     <i class="bi bi-person-badge"></i> Akun Private Premium
@@ -67,8 +67,8 @@
                             </div>
                         </div>
                     @elseif ($detail->product_type == \App\Enums\ProductTypeEnum::Shared)
-                        <!-- Tipe 1: Akun Premium -->
-                        <div class="mb-4 shadow-sm card" id="accountType">
+                        <!-- Tipe 1: Akun shared Premium -->
+                        <div class="mb-4 shadow-sm card">
                             <div class="card-body">
                                 <h5 class="mb-4">
                                     <i class="bi bi-person-badge"></i> Akun Shared Premium
@@ -90,6 +90,44 @@
                                         <textarea class="form-control" rows="10" readonly>{{ $items }}</textarea>
                                     </div>
                                 </div>
+
+
+                            </div>
+                        </div>
+                    @elseif ($detail->product_type == \App\Enums\ProductTypeEnum::Download)
+                        <!-- Tipe 1: File Download -->
+                        <div class="mb-4 shadow-sm card" id="accountType">
+                            <div class="card-body">
+                                <h5 class="mb-4">
+                                    <i class="bi bi-person-badge"></i> Link Download File
+                                </h5>
+
+                                {{-- note  --}}
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    Pastikan anda menggunakan Email <span
+                                        class="fw-bold">{{ $transaction->email }}</span> untuk mengakses link
+                                    download
+                                </div>
+
+                                @foreach ($detail->productDownload as $productDownload)
+                                    <div class="mb-4 row">
+                                        <div class="col-md-12">
+                                            <label class="form-label">Link Download</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control"
+                                                    value="{{ $productDownload->file_url }}" readonly />
+                                                <button class="btn btn-outline-secondary" onclick="copyContent(this)">
+                                                    <i class="bi bi-link -45deg"></i>
+                                                </button>
+                                                <a href="{{ $productDownload->file_url }}" class="btn btn-success">
+                                                    <i class="bi bi-download"></i>
+                                                    Download
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
 
 
                             </div>
@@ -156,6 +194,10 @@
                                 <i class="bi bi-receipt"></i> Invoice
                             </button>
                         @elseif ($transaction->payment_status == \App\Enums\OrderStatusEnum::Unpaid)
+                            {{-- show qr code --}}
+                            <div class="text-center">
+                                <img src="{{ $transaction->payment_qr_url }}" alt="QR Code" class="mb-3 img-fluid" />
+                            </div>
                             <a class="btn btn-outline-primary" href="{{ $transaction->payment_url }}">
                                 <i class="bi bi-credit-card"></i> Bayar
                             </a>

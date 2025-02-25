@@ -38,16 +38,21 @@ class TransactionDetail extends Model
 
     public function productDownload(): BelongsToMany
     {
-        return $this->belongsToMany(ProductDownload::class, 'product_download_transactions')->withTimestamps();
+        return $this->belongsToMany(ProductDownload::class, 'product_download_transactions')
+            ->withPivot('permission_id')
+            ->withTimestamps();
     }
 
     public function productShared(): BelongsToMany
     {
-        return $this->belongsToMany(ProductShared::class, 'product_shared_transactions')->withTimestamps()->withPivot('used_count');
+        return $this->belongsToMany(ProductShared::class, 'product_shared_transactions')
+            ->withPivot('used_count')
+            ->withTimestamps();
     }
 
     public function productPrivate(): BelongsToMany
     {
-        return $this->belongsToMany(ProductPrivate::class, 'product_private_transactions')->withTimestamps();
+        return $this->belongsToMany(ProductPrivate::class, 'product_private_transactions')
+            ->withTimestamps();
     }
 }

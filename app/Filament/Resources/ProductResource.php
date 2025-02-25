@@ -52,7 +52,7 @@ class ProductResource extends Resource
                                     ->visible(function (Get $get) {
                                         return $get('type') === \App\Enums\ProductTypeEnum::Manual->value;
                                     })
-                                    ->requiredIf('type', \App\Enums\ProductTypeEnum::Manual),
+                                    ->requiredIf('type', \App\Enums\ProductTypeEnum::Manual->value),
 
                                 Forms\Components\TextInput::make('price')
                                     ->label('Price')
@@ -142,7 +142,31 @@ class ProductResource extends Resource
     {
         return $table
             ->columns([
-                //
+                Tables\Columns\ImageColumn::make('image')
+                    ->label('Image'),
+                Tables\Columns\TextColumn::make('name')
+                    ->label('Name')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('type')
+                    ->label('Type')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('price')
+                    ->label('Price')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('discount')
+                    ->label('Discount')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('quantity')
+                    ->label('Quantity')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\IconColumn::make('is_active')
+                    ->label('Is Active')
+                    ->boolean(),
             ])
             ->filters([
                 //

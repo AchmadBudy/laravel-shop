@@ -74,7 +74,6 @@ class TripayApiController extends Controller
 
                     // send email, update stock, etc
                     $paymentService->sendItems($invoice);
-                    logger($invoice);
 
                     break;
 

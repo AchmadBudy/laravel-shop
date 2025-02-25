@@ -2,8 +2,10 @@
 
 namespace App\Livewire;
 
+use App\Enums\PaymentTypeEnum;
 use App\Models\Product;
 use Livewire\Component;
+use Illuminate\Validation\Rule;
 
 class QuickCheckout extends Component
 {
@@ -12,6 +14,8 @@ class QuickCheckout extends Component
     public int $stockCount = 1;
 
     public string $email;
+
+    public string $paymentMethod;
 
 
     public function mount(Product $product)
@@ -56,6 +60,7 @@ class QuickCheckout extends Component
         $this->validate([
             'stockCount' => 'required|numeric|min:1',
             'email' => 'required|email',
+            'paymentMethod' => ['required', Rule::enum(PaymentTypeEnum::class)],
         ]);
 
         if ($this->product->type === \App\Enums\ProductTypeEnum::Download->value && $this->stockCount > 1) {
@@ -64,7 +69,7 @@ class QuickCheckout extends Component
         }
 
         $paymentService = new \App\Services\PaymentService();
-        $response = $paymentService->createTransaction($this->product->id, $this->stockCount, $this->email);
+        $response = $paymentService->createTransaction($this->product->id, $this->stockCount, $this->email, $this->paymentMethod);
 
         if ($response['success']) {
             return redirect($response['payment_url']);

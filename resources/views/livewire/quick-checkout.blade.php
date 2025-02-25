@@ -14,61 +14,25 @@
                             ini</small>
                     </div>
 
+
                     <!-- Pilihan Metode Pembayaran -->
                     <div class="mb-4">
-                        <h6 class="mb-3">
-                            Pilih Metode Pembayaran
-                        </h6>
+                        <h6 class="mb-3">Pilih Metode Pembayaran</h6>
 
                         <div class="row g-3">
-                            <!-- QRIS -->
-                            <div class="col-md-6">
-                                <label class="w-100">
-                                    <input type="radio" name="payment_method" value="qris" class="d-none"
-                                        required />
-                                    <div class="card payment-method-card">
-                                        <div class="card-body">
-                                            <div class="d-flex align-items-center">
-                                                <img src="qris-logo.png" alt="QRIS"
-                                                    style="
-                                                            height: 30px;
-                                                            margin-right: 15px;
-                                                        " />
-                                                <h6 class="mb-0">
-                                                    QRIS
-                                                </h6>
-                                            </div>
-                                            <small class="text-muted">Scan QR code untuk
-                                                pembayaran</small>
-                                        </div>
+                            @foreach (\App\Enums\PaymentTypeEnum::cases() as $case)
+                                <!-- QRIS -->
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" id="{{ $case->value }}"
+                                            value="{{ $case->value }}" required wire:model.live='paymentMethod'>
+                                        <label class="form-check-label" for="{{ $case->value }}">
+                                            <img src="{{ asset($case->getImage()) }}" alt="QRIS" height="60px">
+                                            {{ $case->getLabel() }}
+                                        </label>
                                     </div>
-                                </label>
-                            </div>
-
-                            <!-- BCA Virtual Account -->
-                            <div class="col-md-6">
-                                <label class="w-100">
-                                    <input type="radio" name="payment_method" value="bca" class="d-none"
-                                        required />
-                                    <div class="card payment-method-card">
-                                        <div class="card-body">
-                                            <div class="d-flex align-items-center">
-                                                <img src="bca-logo.png" alt="BCA"
-                                                    style="
-                                                            height: 25px;
-                                                            margin-right: 15px;
-                                                        " />
-                                                <h6 class="mb-0">
-                                                    Virtual Account
-                                                    BCA
-                                                </h6>
-                                            </div>
-                                            <small class="text-muted">Transfer ke Virtual
-                                                Account</small>
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
 

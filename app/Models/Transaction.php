@@ -25,6 +25,7 @@ class Transaction extends Model
     protected $casts = [
         'paid_at' => 'datetime',
         'payment_status' => \App\Enums\OrderStatusEnum::class,
+        'payment_method' => \App\Enums\PaymentTypeEnum::class,
     ];
 
     public function user(): BelongsTo

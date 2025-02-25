@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\OrderStatusEnum;
+use App\Enums\PaymentTypeEnum;
 use App\Models\Product;
 use App\Models\ProductDownload;
 use App\Models\ProductPrivate;
@@ -25,7 +26,7 @@ class PaymentService
      * 
      * @return array
      */
-    public function createTransaction(string $productId, int $quantity, string $email): array
+    public function createTransaction(string $productId, int $quantity, string $email, string $paymentMethod, string $userId = null, int $additionalDiscount = 0): array
     {
         DB::beginTransaction();
         try {
@@ -50,16 +51,20 @@ class PaymentService
             // calculate total price
             $totalOriginalPrice = $product->price * $quantity;
             $totalAmount = $product->price * $quantity;
-            $totalDiscount = $product->discount * $quantity;
+
+            // check if additional discount is more than total price
+            if ($additionalDiscount > $totalOriginalPrice) {
+                throw new \Exception('Additional discount is more than total price');
+            }
 
             $transaction = Transaction::create([
-                'user_id' => Auth::id(),
+                'user_id' => $userId ?? Auth::id(),
                 // 'invoice_number',
                 'total_price' => $totalOriginalPrice,
-                'total_discount' => $totalDiscount,
+                'total_discount' => $additionalDiscount,
                 'total_payment' => $totalAmount,
-                'email' => $email ?? Auth::user()->email,
-                'payment_method' => 'TRIPAY|QRIS',
+                'email' => $email,
+                'payment_method' => $paymentMethod,
                 'payment_status' => OrderStatusEnum::Unpaid,
                 // 'paid_at',
             ]);
@@ -106,36 +111,59 @@ class PaymentService
                     $productItem = $this->getDownloadItem($productId, $quantity);
                     $transactionDetail->productDownload()->attach($productItem->id);
                     break;
+                case \App\Enums\ProductTypeEnum::Manual:
+                    // do nothing lol
+                    break;
+
                 default:
                     throw new \Exception('Product type is not valid');
                     break;
             }
 
-            // call the tripay service
-            $tripayService = new TripayService();
-            $response = $tripayService->createTransaction([
-                [
-                    'detailProduct' => $product,
-                    'quantity' => $quantity,
-                ]
-            ], $invoiceNumber, $totalAmount);
+            // check payment method
+            switch ($paymentMethod) {
+                case PaymentTypeEnum::TripayQris->value:
+                    // call the tripay service
+                    $tripayService = new TripayService();
+                    $response = $tripayService->createTransaction([
+                        [
+                            'detailProduct' => $product,
+                            'quantity' => $quantity,
+                        ]
+                    ], $invoiceNumber, $totalAmount);
 
-            if (!$response['success']) {
-                throw new \Exception($response['message']);
+                    if (!$response['success']) {
+                        throw new \Exception($response['message']);
+                    }
+
+                    // update the payment url
+                    $transaction->update([
+                        'payment_url' => $response['data']['data']['checkout_url'],
+                        'payment_provider_reference' => $response['data']['data']['reference'],
+                        'payment_qr_url' => $response['data']['data']['qr_url'] ?? null,
+                    ]);
+                    break;
+
+                case 'Point':
+                    // do nothing lol
+                    // still need to implement the point system if needed
+                    break;
+
+                default:
+                    throw new \Exception('Payment method is not valid');
+                    break;
             }
 
-            // update the payment url
-            $transaction->update([
-                'payment_url' => $response['data']['data']['checkout_url'],
-                'payment_provider_reference' => $response['data']['data']['reference'],
-                'payment_qr_url' => $response['data']['data']['qr_url'] ?? null,
-            ]);
+
+
+
 
             DB::commit();
 
             return [
                 'success' => true,
                 'payment_url' => $transaction->payment_url,
+                'transaction' => $transaction,
             ];
         } catch (\Throwable $th) {
             DB::rollBack();
@@ -296,6 +324,10 @@ class PaymentService
                         $detail->productDownload->update([
                             'used_count' => $detail->productDownload->used_count - $detail->quantity,
                         ]);
+
+                        // cancel the download item
+                        $this->cancelDownloadItems($detail->productDownload);
+
                         // detach the product download
                         $detail->productDownload()->detach();
                         break;
@@ -330,11 +362,11 @@ class PaymentService
             }
 
             // send the items
-            $transaction->transactionDetails->each(function ($detail) {
+            $transaction->transactionDetails->each(function ($detail) use ($transaction) {
                 switch ($detail->product_type) {
                     case \App\Enums\ProductTypeEnum::Download:
                         // send the download item
-                        // TODO
+                        $this->processDownloadItems($transaction, $detail);
                         break;
                 }
             });
@@ -360,6 +392,65 @@ class PaymentService
                 'success' => false,
                 'message' => $th->getMessage(),
             ];
+        }
+    }
+
+    private function processDownloadItems(Transaction $transaction, $detail): void
+    {
+        if ($detail->product_type === \App\Enums\ProductTypeEnum::Download) {
+            $productDownload = $detail->productDownload->first();
+            $response = (new GoogleService())->givePermission(
+                $productDownload->file_id,
+                $transaction->email
+            );
+
+            if (!$response['success']) {
+                throw new \Exception($response['message']);
+            }
+
+            // update the product download
+            $detail->productDownload()->syncWithPivotValues([$productDownload->id], [
+                'permission_id' => $response['permissionId'],
+            ]);
+        } else {
+            throw new \Exception('Product type is not valid');
+        }
+    }
+
+    private function cancelDownloadItems($detail): void
+    {
+        if ($detail->product_type === \App\Enums\ProductTypeEnum::Download) {
+            $response = (new GoogleService())->deletePermission(
+                $detail->file_id,
+                $detail->pivot->permission_id
+            );
+
+            if (!$response['success']) {
+                throw new \Exception($response['message']);
+            }
+        } else {
+            throw new \Exception('Product type is not valid');
+        }
+    }
+
+
+    public function notifyAdminToSendItems(Transaction $transaction): void
+    {
+
+        try {
+            // send email to admin
+            // send email to user
+
+            // update the transaction status to Processing
+            $transaction->update([
+                'payment_status' => OrderStatusEnum::Processing,
+            ]);
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            \Illuminate\Support\Facades\Log::error($th->getMessage());
         }
     }
 }

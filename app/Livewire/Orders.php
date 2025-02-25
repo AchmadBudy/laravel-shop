@@ -48,7 +48,7 @@ class Orders extends Component
                 ->when($this->startDate, fn($query, $startDate) => $query->whereDate('created_at', '>=', $startDate))
                 ->when($this->endDate, fn($query, $endDate) => $query->whereDate('created_at', '<=', $endDate))
                 ->latest()
-                ->paginate(10)
+                ->paginate(6)
         ];
         return view('livewire.orders', $data);
     }

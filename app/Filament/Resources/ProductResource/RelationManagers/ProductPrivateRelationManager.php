@@ -54,9 +54,20 @@ class ProductPrivateRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
+                    ->label('Add Bulk Items')
                     ->createAnother(false)
                     ->using(function (Action $action, array $data, string $model): Model {
                         return self::createItems($data,  $this->ownerRecord, $action);
+                    }),
+                Tables\Actions\CreateAction::make()
+                    ->label('Add Single Item')
+                    ->createAnother(false)
+                    ->using(function (Action $action, array $data, string $model): Model {
+                        return $model::create([
+                            'product_id' => $this->ownerRecord->id,
+                            'item' => $data['items'],
+                            'is_sold' => false,
+                        ]);
                     }),
             ])
             ->actions([

@@ -19,26 +19,6 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/orders/{transaction:invoice_number}/detail', \App\Livewire\OrderDetail::class)->name('order.detail');
 });
 
-Route::get('/test', function () {
-    // return (new \App\Services\TripayService())->getChannels();
-
-
-    $product = [
-        [
-            'detailProduct' => \App\Models\Product::find(1),
-            'quantity' => 2,
-        ]
-    ];
-
-    $merchantRef = 'INV-123456';
-    $amount = 5000;
-
-    $tripayService = new \App\Services\TripayService();
-    $response = $tripayService->createTransaction($product, $merchantRef, $amount);
-
-    dd($response);
-});
-
 
 Route::get('/products', \App\Livewire\Products::class)->name('products');
 Route::get('/products/{product:slug}', \App\Livewire\ProductDetail::class)->name('product.detail');
