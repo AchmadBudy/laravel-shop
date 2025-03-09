@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Number;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\DB;
 
 
 class TransactionResource extends Resource
@@ -274,6 +275,35 @@ class TransactionResource extends Resource
                                     ->fullWidth()
                                     ->visibleOn('view')
                                     ->hidden(fn(Transaction $transaction) => !in_array($transaction->payment_status, [OrderStatusEnum::Unpaid])),
+
+                                Actions::make([
+                                    Action::make('changeToPaid')
+                                        ->label('Ubah Menjadi Success')
+                                        ->requiresConfirmation()
+                                        ->modalHeading('Ubah Menjadi Paid')
+                                        ->modalDescription('Apakah anda yakin ingin mengubah status menjadi Paid?')
+                                        ->modalSubmitActionLabel('Ubah Menjadi Paid')
+                                        ->action(function (Transaction $transaction) {
+                                            if ($transaction->payment_status === OrderStatusEnum::Processing) {
+                                                // update transaction status to completed
+                                                $response = (new \App\Services\PaymentService())->changePaymentStatus($transaction, OrderStatusEnum::Completed);
+
+                                                if (!$response['success']) {
+                                                    Notification::make()
+                                                        ->warning()
+                                                        ->title('Failed to change to success')
+                                                        ->body($response['message'])
+                                                        ->send();
+                                                    return;
+                                                }
+
+                                                redirect(static::getUrl('view', ['record' => $transaction->id,]));
+                                            }
+                                        }),
+                                ])
+                                    ->fullWidth()
+                                    ->visibleOn('view')
+                                    ->hidden(fn(Transaction $transaction) => !in_array($transaction->payment_status, [OrderStatusEnum::Processing])),
                             ])
                             ->columnSpan(1),
                     ])
@@ -298,7 +328,7 @@ class TransactionResource extends Resource
                     ->extraItemActions([
                         Action::make('viewItems')
                             ->icon('heroicon-m-eye')
-                            ->color('danger')
+                            ->color('info')
                             ->form([
                                 Textarea::make('items')
                                     ->label('Items')
@@ -331,6 +361,15 @@ class TransactionResource extends Resource
                                             return ($index + 1) . ". " . $item->item;
                                         })->implode("\n");
                                         break;
+                                    case ProductTypeEnum::Manual:
+                                        $items = $transactionDetails->productManual;
+                                        $items = $items->map(function ($item, $index) {
+                                            return ($index + 1) . ". " . $item->item;
+                                        })->implode("\n");
+                                        break;
+                                    default:
+                                        $items = '';
+                                        break;
                                 }
 
                                 return [
@@ -339,7 +378,44 @@ class TransactionResource extends Resource
                             })
                             ->disabledForm()
                             ->modalSubmitAction(false)
-                            ->hidden(fn(Transaction $transaction) => !in_array($transaction->payment_status, [OrderStatusEnum::Unpaid, OrderStatusEnum::Paid, OrderStatusEnum::Completed]))
+                            ->hidden(fn(Transaction $transaction) => !in_array($transaction->payment_status, [OrderStatusEnum::Unpaid, OrderStatusEnum::Paid, OrderStatusEnum::Completed, OrderStatusEnum::Processing])),
+                        Action::make('addManualItems')
+                            ->icon('heroicon-m-plus-circle')
+                            ->color('info')
+                            ->form([
+                                Textarea::make('items')
+                                    ->label('Items')
+                                    ->rows(5)
+                            ])
+                            ->action(function (Transaction $transaction, array $arguments, array $data) {
+                                DB::beginTransaction();
+                                try {
+                                    $transactionDetails = TransactionDetail::where('transaction_id', $transaction->id)->get();
+                                    foreach ($transactionDetails as $transactionDetail) {
+                                        switch ($transactionDetail->product_type) {
+                                            case ProductTypeEnum::Manual:
+                                                $transactionDetail->productManual()->create([
+                                                    'product_id' => $transactionDetail->product_id,
+                                                    'item' => $data['items'],
+                                                ]);
+                                                break;
+                                            default:
+                                                throw new \Exception('Product type not supported');
+                                                break;
+                                        }
+                                    }
+
+                                    DB::commit();
+                                } catch (\Throwable $th) {
+                                    DB::rollBack();
+                                    Notification::make()
+                                        ->warning()
+                                        ->title('Failed to add manual items')
+                                        ->body($th->getMessage())
+                                        ->send();
+                                }
+                            })
+                            ->hidden(fn(Transaction $transaction) => !in_array($transaction->payment_status, [OrderStatusEnum::Processing])),
                     ])
                     ->columnSpanFull()
                     ->visibleOn('view'),

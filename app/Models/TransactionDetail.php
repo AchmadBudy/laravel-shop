@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TransactionDetail extends Model
 {
@@ -54,5 +55,10 @@ class TransactionDetail extends Model
     {
         return $this->belongsToMany(ProductPrivate::class, 'product_private_transactions')
             ->withTimestamps();
+    }
+
+    public function productManual(): HasMany
+    {
+        return $this->hasMany(ProductManual::class);
     }
 }

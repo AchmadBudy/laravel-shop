@@ -132,6 +132,29 @@
 
                             </div>
                         </div>
+                    @elseif ($detail->product_type == \App\Enums\ProductTypeEnum::Manual)
+                        <div class="mb-4 shadow-sm card">
+                            <div class="card-body">
+                                <h5 class="mb-4">
+                                    <i class="bi bi-person-badge"></i> Manual Produk
+                                </h5>
+
+                                <div class="mb-4 row">
+                                    <div class="col-md-12">
+                                        <label class="form-label">Data Item</label>
+                                        @php
+                                            $items = '';
+                                            foreach ($detail->productManual as $item) {
+                                                $items .= $item->item . PHP_EOL;
+                                            }
+                                        @endphp
+                                        <textarea class="form-control" rows="10" readonly>{{ $items }}</textarea>
+                                    </div>
+                                </div>
+
+
+                            </div>
+                        </div>
                     @endif
 
                     {{-- <!-- Tipe 2: File Private -->

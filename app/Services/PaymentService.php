@@ -377,7 +377,7 @@ class PaymentService
             switch ($status) {
                 case OrderStatusEnum::Paid:
                     $transaction->update([
-                        'payment_status' => OrderStatusEnum::Paid,
+                        'payment_status' => $status,
                         'paid_at' => now(),
                     ]);
 
@@ -387,10 +387,14 @@ class PaymentService
                     break;
 
                 case OrderStatusEnum::Cancelled:
-                    $transaction->update(['payment_status' => OrderStatusEnum::Cancelled]);
+                    $transaction->update(['payment_status' => $status]);
 
                     // update stock
                     $this->cancelTransaction($transaction);
+                    break;
+
+                case OrderStatusEnum::Completed:
+                    $transaction->update(['payment_status' => $status]);
                     break;
 
                 default:
@@ -429,15 +433,22 @@ class PaymentService
                         // send the download item
                         $this->processDownloadItems($transaction, $detail);
                         break;
+                    case \App\Enums\ProductTypeEnum::Manual:
+                        // $this->notifyAdminToSendItems($transaction);
+                        break;
                 }
             });
 
-            // update the transaction status to completed
-            $transaction->update([
-                'payment_status' => OrderStatusEnum::Completed,
-            ]);
-
-            logger('masuk bang');
+            // update the transaction status to completed but if there is product type manual, then set it to processing
+            if ($transaction->transactionDetails->where('product_type', \App\Enums\ProductTypeEnum::Manual)->count() > 0) {
+                $transaction->update([
+                    'payment_status' => OrderStatusEnum::Processing,
+                ]);
+            } else {
+                $transaction->update([
+                    'payment_status' => OrderStatusEnum::Completed,
+                ]);
+            }
 
             DB::commit();
 
