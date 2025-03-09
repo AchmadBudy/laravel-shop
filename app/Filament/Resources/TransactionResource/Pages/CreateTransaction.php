@@ -7,6 +7,7 @@ use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 class CreateTransaction extends CreateRecord
 {
@@ -26,7 +27,7 @@ class CreateTransaction extends CreateRecord
 
 
             $paymentService = new \App\Services\PaymentService();
-            $response = $paymentService->createTransaction($productId, $quantity, $data['email'], $data['payment_type'], additionalDiscount: $data['additional_discount'] ?? 0);
+            $response = $paymentService->createTransaction($productId, $quantity, $data['email'], $data['payment_type'], additionalDiscount: $data['additional_discount'] ?? 0, userId: $data['user_id']);
 
             if (!$response['success']) {
                 throw new \Exception($response['message']);
@@ -35,6 +36,7 @@ class CreateTransaction extends CreateRecord
             return $response['transaction'];
             //code...
         } catch (\Throwable $th) {
+            Log::info($th->getMessage());
             Notification::make()
                 ->warning()
                 ->title('Failed to create transaction')
