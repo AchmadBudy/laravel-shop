@@ -11,6 +11,7 @@ use App\Models\ProductShared;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class PaymentService
@@ -24,9 +25,14 @@ class PaymentService
      * @param string $email 
      * 
      * 
-     * @return array
+     * @return array [
+     *  'success' => bool,
+     *  'message' => string,
+     *  'payment_url' => string,
+     *  'transaction' => Transaction [ * ]
+     * ]
      */
-    public function createTransaction(string $productId, int $quantity, string $email, string $paymentMethod, string $userId = null, int $additionalDiscount = 0): array
+    public function createTransaction(string $productId, int $quantity, string $email, string $paymentMethod, ?string $userId = null, int $additionalDiscount = 0): array
     {
         DB::beginTransaction();
         try {
@@ -55,6 +61,16 @@ class PaymentService
             // check if additional discount is more than total price
             if ($additionalDiscount > $totalOriginalPrice) {
                 throw new \Exception('Additional discount is more than total price');
+            }
+
+            // check if additional discount is less than 0
+            if ($additionalDiscount < 0) {
+                throw new \Exception('Additional discount is less than 0');
+            }
+
+            // check if additional discount is more than 0
+            if ($additionalDiscount > 0) {
+                $totalAmount = $totalAmount - $additionalDiscount;
             }
 
             $transaction = Transaction::create([
@@ -133,7 +149,8 @@ class PaymentService
                     ], $invoiceNumber, $totalAmount);
 
                     if (!$response['success']) {
-                        throw new \Exception($response['message']);
+                        Log::error($response['message']);
+                        throw new \Exception('Error while connecting to payment gateway');
                     }
 
                     // update the payment url
@@ -167,7 +184,7 @@ class PaymentService
             ];
         } catch (\Throwable $th) {
             DB::rollBack();
-            logger($th->getMessage());
+            Log::error($th->getMessage());
 
             return [
                 'success' => false,
@@ -336,6 +353,50 @@ class PaymentService
                         break;
                 }
             });
+
+            DB::commit();
+
+            return [
+                'success' => true,
+            ];
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            return [
+                'success' => false,
+                'message' => $th->getMessage(),
+            ];
+        }
+    }
+
+
+    public function changePaymentStatus(Transaction $transaction, OrderStatusEnum $status): array
+    {
+        DB::beginTransaction();
+        try {
+            switch ($status) {
+                case OrderStatusEnum::Paid:
+                    $transaction->update([
+                        'payment_status' => OrderStatusEnum::Paid,
+                        'paid_at' => now(),
+                    ]);
+
+                    // send email, update stock, etc
+                    $this->sendItems($transaction);
+
+                    break;
+
+                case OrderStatusEnum::Cancelled:
+                    $transaction->update(['payment_status' => OrderStatusEnum::Cancelled]);
+
+                    // update stock
+                    $this->cancelTransaction($transaction);
+                    break;
+
+                default:
+                    throw new \Exception('Unrecognized payment status');
+                    break;
+            }
 
             DB::commit();
 

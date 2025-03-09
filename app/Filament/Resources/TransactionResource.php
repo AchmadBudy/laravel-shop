@@ -25,7 +25,10 @@ use Filament\Forms\Get;
 use Filament\Support\RawJs;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Number;
+use Filament\Notifications\Notification;
+
 
 class TransactionResource extends Resource
 {
@@ -107,7 +110,8 @@ class TransactionResource extends Resource
                             ])
                             ->columnSpan(1),
                     ])
-                    ->columns(3),
+                    ->columns(3)
+                    ->visibleOn('create'),
 
                 Repeater::make('transactonProducts')
                     ->label('Transaction Products')
@@ -180,6 +184,101 @@ class TransactionResource extends Resource
                         $set('total_after_discount', $afterDiscount);
                     })
                     ->visibleOn('create'),
+
+                Grid::make()
+                    ->schema([
+                        Section::make()
+                            ->schema([
+                                Select::make('user_id')
+                                    ->label('User')
+                                    ->relationship(name: 'user', titleAttribute: 'email')
+                                    ->disabled(),
+                                TextInput::make('email')
+                                    ->label('Email Transaction (Untuk Share Product Download)')
+                                    ->disabled(),
+                                TextInput::make('total_price')
+                                    ->label('Total')
+                                    ->numeric()
+                                    ->disabled(),
+                                TextInput::make('total_discount')
+                                    ->label('Additional Discount')
+                                    ->numeric()
+                                    ->disabled()
+                                    ->columnSpan(1),
+                                TextInput::make('total_payment')
+                                    ->label('Total After Discount')
+                                    ->numeric()
+                                    ->rules('required', 'numeric', 'min:0')
+                                    ->disabled()
+                                    ->columnSpan(1),
+                            ])
+                            ->columns(2)
+                            ->columnSpan(2),
+
+                        Section::make()
+                            ->schema([
+                                Select::make('payment_method')
+                                    ->label('Payment Type')
+                                    ->options(PaymentTypeEnum::class)
+                                    ->disabled(),
+                                Select::make('payment_status')
+                                    ->label('Payment Status')
+                                    ->options(OrderStatusEnum::class)
+                                    ->disabled(),
+
+
+                                Actions::make([
+                                    Action::make('changeToPaid')
+                                        ->label('Ubah Menjadi Paid')
+                                        ->requiresConfirmation()
+                                        ->modalHeading('Ubah Menjadi Paid')
+                                        ->modalDescription('Apakah anda yakin ingin mengubah status menjadi Paid?')
+                                        ->modalSubmitActionLabel('Ubah Menjadi Paid')
+                                        ->action(function (Transaction $transaction) {
+                                            if ($transaction->payment_status === OrderStatusEnum::Unpaid) {
+                                                $response = (new \App\Services\PaymentService())->changePaymentStatus($transaction, OrderStatusEnum::Paid);
+                                                if (!$response['success']) {
+                                                    Notification::make()
+                                                        ->warning()
+                                                        ->title('Failed to change to paid')
+                                                        ->body($response['message'])
+                                                        ->send();
+                                                    return;
+                                                }
+                                                redirect(static::getUrl('view', ['record' => $transaction->id,]));
+                                            }
+                                        }),
+
+                                    Action::make('cancel')
+                                        ->label('Cancel')
+                                        ->requiresConfirmation()
+                                        ->modalHeading('Cancel Transaction')
+                                        ->modalDescription('Apakah anda yakin ingin membatalkan transaksi ini?')
+                                        ->modalSubmitActionLabel('Cancel')
+                                        ->action(function (Transaction $transaction) {
+                                            if ($transaction->payment_status === OrderStatusEnum::Unpaid) {
+                                                $response = (new \App\Services\PaymentService())->changePaymentStatus($transaction, OrderStatusEnum::Cancelled);
+                                                if (!$response['success']) {
+                                                    Notification::make()
+                                                        ->warning()
+                                                        ->title('Failed to cancel transaction')
+                                                        ->body($response['message'])
+                                                        ->send();
+
+                                                    return;
+                                                }
+                                                redirect(static::getUrl('view', ['record' => $transaction->id,]));
+                                            }
+                                        }),
+                                ])
+                                    ->fullWidth()
+                                    ->visibleOn('view')
+                                    ->hidden(fn(Transaction $transaction) => !in_array($transaction->payment_status, [OrderStatusEnum::Unpaid])),
+                            ])
+                            ->columnSpan(1),
+                    ])
+                    ->columns(3)
+                    ->visibleOn('view'),
 
                 Repeater::make('transactionDetails')
                     ->relationship('transactionDetails')
@@ -292,5 +391,10 @@ class TransactionResource extends Resource
             'edit' => Pages\EditTransaction::route('/{record}/edit'),
             'view' => Pages\ViewTransaction::route('/{record}'),
         ];
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return false;
     }
 }
