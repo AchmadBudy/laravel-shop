@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Transaction;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -43,6 +44,7 @@ class Orders extends Component
         $data = [
             'orders' => Transaction::query()
                 ->with(['user', 'transactionDetails', 'transactionDetails.product'])
+                ->where('user_id', Auth::id())
                 ->when($this->search, fn($query, $search) => $query->where('invoice_number', 'like', "%$search%"))
                 ->when($this->status, fn($query, $status) => $status === 'all' ? $query : $query->where('payment_status', $status))
                 ->when($this->startDate, fn($query, $startDate) => $query->whereDate('created_at', '>=', $startDate))
