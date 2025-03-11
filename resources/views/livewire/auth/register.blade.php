@@ -10,45 +10,67 @@
                     </div>
 
                     <!-- Form Register -->
-                    <form>
+                    <form wire:submit="register">
                         <!-- Email -->
                         <div class="mb-3">
                             <label class="form-label">Alamat Email</label>
-                            <input type="email" class="form-control form-control-lg" placeholder="nama@email.com"
-                                required>
+                            <input type="email"
+                                class="form-control form-control-lg @error('email') is-invalid @enderror"
+                                placeholder="nama@email.com" required wire:model="email">
+                            @error('email')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
+
+                        <!-- Name -->
+                        <div class="mb-3">
+                            <label class="form-label">Nama Lengkap</label>
+                            <input type="text"
+                                class="form-control form-control-lg @error('name') is-invalid @enderror"
+                                placeholder="Nama Lengkap" required wire:model="name">
+                            @error('name')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                            @enderror
                         </div>
 
                         <!-- Password -->
                         <div class="mb-3">
                             <label class="form-label">Password</label>
                             <div class="input-group">
-                                <input type="password" class="form-control form-control-lg" placeholder="••••••••"
-                                    id="regPassword" required>
+                                <input type="password"
+                                    class="form-control form-control-lg @error('password') is-invalid @enderror"
+                                    placeholder="••••••••" id="regPassword" required wire:model="password">
                                 <button class="btn btn-outline-secondary" type="button" onclick="toggleRegPassword()">
                                     <i class="bi bi-eye"></i>
                                 </button>
                             </div>
+                            @error('password')
+                                <div class="invalid-feedback d-block">
+                                    {{ $message }}
+                                </div>
+                            @enderror
                         </div>
 
                         <!-- Confirm Password -->
                         <div class="mb-4">
                             <label class="form-label">Konfirmasi Password</label>
-                            <input type="password" class="form-control form-control-lg" placeholder="••••••••" required>
-                        </div>
-
-                        <!-- Terms -->
-                        <div class="mb-4">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="terms" required>
-                                <label class="form-check-label" for="terms">
-                                    Saya setuju dengan <a href="#" class="text-decoration-none">Syarat &
-                                        Ketentuan</a>
-                                </label>
-                            </div>
+                            <input type="password"
+                                class="form-control form-control-lg @error('password_confirmation') is-invalid @enderror"
+                                placeholder="••••••••" required wire:model="password_confirmation"
+                                id="password_confirmation">
+                            @error('password_confirmation')
+                                <div class="invalid-feedback d-block">
+                                    {{ $message }}
+                                </div>
+                            @enderror
                         </div>
 
                         <!-- Submit Button -->
-                        <button type="submit" class="mb-3 btn btn-primary btn-lg w-100">
+                        <button type="submit" class="mb-3 btn btn-primary btn-lg w-100" wire:loading.attr="disabled">
                             <i class="bi bi-person-plus"></i> Daftar
                         </button>
 
@@ -64,4 +86,16 @@
     </div>
 </div>
 
-<script></script>
+<script>
+    function toggleRegPassword() {
+        const password = document.getElementById('regPassword');
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+    }
+
+    function toggleRegPasswordConfirmation() {
+        const password = document.getElementById('password_confirmation');
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+    }
+</script>

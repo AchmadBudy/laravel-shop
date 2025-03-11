@@ -28,6 +28,12 @@ class Login extends Component
 
     public function login()
     {
+        $this->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+            'remember' => 'boolean',
+        ]);
+
         // rate limit login attempts
         if (RateLimiter::tooManyAttempts(
             key: $this->throttleKey(),
@@ -38,12 +44,6 @@ class Login extends Component
                 'email' => "Terlalu banyak percobaan login. Silahkan coba lagi dalam {$seconds} detik.",
             ]);
         }
-
-        $this->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-            'remember' => 'boolean',
-        ]);
 
         if (!Auth::attempt($this->only('email', 'password'), $this->remember)) {
             RateLimiter::increment($this->throttleKey());
