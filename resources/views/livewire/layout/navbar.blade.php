@@ -26,10 +26,10 @@
                     <a class="nav-link" href="{{ route('products') }}" wire:navigate>Semua Produk</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">Garansi</a>
+                    <a class="nav-link" href="{{ route('garansi') }}" wire:navigate>Garansi</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">Kontak</a>
+                    <a class="nav-link" href="{{ route('contact-us') }}" wire:navigate>Kontak</a>
                 </li>
             </ul>
 
@@ -48,6 +48,13 @@
                             <i class="bi bi-person-circle"></i> {{ auth()->user()->name }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
+                            @if (auth()->user()->role == \App\Enums\RoleEnum::Admin)
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('filament.admin.pages.dashboard') }}"><i
+                                            class="bi bi-speedometer2"></i>
+                                        Dashboard</a>
+                                </li>
+                            @endif
                             <li>
                                 <a class="dropdown-item" href="{{ route('profile') }}" wire:navigate><i
                                         class="bi bi-pencil-square"></i>

@@ -19,6 +19,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/orders/{transaction:invoice_number}/detail', \App\Livewire\OrderDetail::class)->name('order.detail');
 });
 
-
+Route::get('/garansi', \App\Livewire\Garansi::class)->name('garansi');
+Route::get('/contact-us', \App\Livewire\Contactus::class)->name('contact-us');
 Route::get('/products', \App\Livewire\Products::class)->name('products');
 Route::get('/products/{product:slug}', \App\Livewire\ProductDetail::class)->name('product.detail');
