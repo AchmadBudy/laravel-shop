@@ -79,6 +79,14 @@
                 text: event.detail.message,
             });
         });
+
+        window.addEventListener('errorMessage', event => {
+            Swal.fire({
+                icon: 'error',
+                title: event.detail.title,
+                text: event.detail.message,
+            });
+        });
     </script>
 </head>
 

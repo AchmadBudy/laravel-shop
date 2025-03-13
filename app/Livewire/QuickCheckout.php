@@ -4,8 +4,11 @@ namespace App\Livewire;
 
 use App\Enums\PaymentTypeEnum;
 use App\Models\Product;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Title;
 
 class QuickCheckout extends Component
 {
@@ -31,7 +34,7 @@ class QuickCheckout extends Component
             abort(404);
         }
 
-        $this->email = auth()->user()?->email;
+        $this->email = Auth::user()?->email;
     }
 
     public function increaseStockCount(): void
@@ -64,7 +67,7 @@ class QuickCheckout extends Component
         ]);
 
         if ($this->product->type === \App\Enums\ProductTypeEnum::Download->value && $this->stockCount > 1) {
-            dd('Download product quantity is not valid');
+            $this->dispatch('errorMessage', title: 'Error', message: 'Downloadable product can only be purchased one at a time.');
             return;
         }
 
@@ -74,8 +77,8 @@ class QuickCheckout extends Component
         if ($response['success']) {
             return redirect($response['payment_url']);
         } else {
-            dd($response['message']);
-            session()->flash('error', $response['message']);
+            $this->dispatch('errorMessage', title: 'Error', message: $response['message']);
+            return;
         }
     }
 
