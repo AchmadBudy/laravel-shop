@@ -13,6 +13,27 @@
                         <p class="text-muted">Member sejak {{ auth()->user()->created_at->year }}</p>
                     </div>
 
+
+                    @if ($errors->any())
+                        <div class="mb-4 alert alert-danger alert-dismissible fade show" role="alert">
+                            <h5 class="alert-heading d-flex align-items-center">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                Mohon Perhatian!
+                            </h5>
+                            <hr>
+                            <ul class="mb-0 list-unstyled">
+                                @foreach ($errors->all() as $error)
+                                    <li class="mb-2 d-flex align-items-center">
+                                        <i class="bi bi-dot me-2"></i>
+                                        {{ $error }}
+                                    </li>
+                                @endforeach
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                aria-label="Close"></button>
+                        </div>
+                    @endif
+
                     <!-- Tabs Navigation -->
                     <ul class="mb-4 nav nav-tabs" id="profileTabs" role="tablist">
                         <li class="nav-item" role="presentation">
@@ -41,14 +62,14 @@
                         <!-- Tab Email -->
                         <div class="tab-pane fade show active" id="email" role="tabpanel"
                             aria-labelledby="email-tab">
-                            <form action="update-email.php" method="POST">
-                                <div class="mb-3">
-                                    <label class="form-label">Email Saat Ini</label>
-                                    <input type="email" class="form-control" value="{{ auth()->user()->email }}"
-                                        disabled />
-                                </div>
+                            {{-- <form> --}}
+                            <div class="mb-3">
+                                <label class="form-label">Email Saat Ini</label>
+                                <input type="email" class="form-control" value="{{ auth()->user()->email }}"
+                                    disabled />
+                            </div>
 
-                                {{-- <div class="mb-3">
+                            {{-- <div class="mb-3">
                                     <label class="form-label">Email Baru</label>
                                     <input type="email" class="form-control" name="new_email" required />
                                 </div>
@@ -56,12 +77,12 @@
                                 <button type="submit" class="btn btn-primary">
                                     Simpan Perubahan
                                 </button> --}}
-                            </form>
+                            {{-- </form> --}}
                         </div>
 
                         <!-- Tab Nomor HP -->
                         <div class="tab-pane fade" id="phone" role="tabpanel" aria-labelledby="phone-tab">
-                            <form action="update-phone.php" method="POST">
+                            <form wire:submit='updatePhone'>
                                 <div class="mb-3">
                                     <label class="form-label">Nomor HP Saat Ini</label>
                                     <input type="tel" class="form-control" value="{{ auth()->user()->phone }}"
@@ -70,8 +91,8 @@
 
                                 <div class="mb-3">
                                     <label class="form-label">Nomor HP Baru</label>
-                                    <input type="tel" class="form-control" name="new_phone" pattern="[0-9]{10,13}"
-                                        title="Masukkan nomor HP yang valid" required />
+                                    <input type="tel" class="form-control" name="new_phone" pattern="[0-9]{11,13}"
+                                        title="Masukkan nomor HP yang valid" required wire:model='newPhone' />
                                     <small class="text-muted">Contoh: 081234567890</small>
                                 </div>
 
@@ -83,22 +104,24 @@
 
                         <!-- Tab Password -->
                         <div class="tab-pane fade" id="password" role="tabpanel" aria-labelledby="password-tab">
-                            <form action="update-password.php" method="POST">
+                            <form wire:submit='updatePassword'>
                                 <div class="mb-3">
                                     <label class="form-label">Password Saat Ini</label>
-                                    <input type="password" class="form-control" name="current_password" required />
+                                    <input type="password" class="form-control" name="current_password" required
+                                        wire:model='oldPassword' />
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label">Password Baru</label>
                                     <input type="password" class="form-control" name="new_password" minlength="8"
-                                        required />
+                                        required wire:model='newPassword' />
                                     <small class="text-muted">Minimal 8 karakter</small>
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label">Konfirmasi Password Baru</label>
-                                    <input type="password" class="form-control" name="confirm_password" required />
+                                    <input type="password" class="form-control" name="confirm_password" required
+                                        wire:model='newPassword_confirmation' />
                                 </div>
 
                                 <button type="submit" class="btn btn-primary">
