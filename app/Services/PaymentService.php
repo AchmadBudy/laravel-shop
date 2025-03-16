@@ -382,7 +382,11 @@ class PaymentService
                     ]);
 
                     // send email, update stock, etc
-                    $this->sendItems($transaction);
+                    $result = $this->sendItems($transaction);
+
+                    if (!$result['success']) {
+                        throw new \Exception($result['message']);
+                    }
 
                     break;
 
