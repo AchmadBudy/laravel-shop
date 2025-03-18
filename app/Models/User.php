@@ -27,6 +27,7 @@ class User extends Authenticatable implements FilamentUser
         'phone',
         'role',
         'avatar',
+        'point'
     ];
 
     /**
@@ -61,5 +62,15 @@ class User extends Authenticatable implements FilamentUser
     public function carts()
     {
         return $this->hasMany(Cart::class);
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
+    public function hispointHistories()
+    {
+        return $this->hasMany(UserHistoryPoint::class);
     }
 }

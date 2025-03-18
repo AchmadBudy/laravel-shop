@@ -4,11 +4,13 @@ namespace App\Services;
 
 use App\Enums\OrderStatusEnum;
 use App\Enums\PaymentTypeEnum;
+use App\Jobs\SendItemsJob;
 use App\Models\Product;
 use App\Models\ProductDownload;
 use App\Models\ProductPrivate;
 use App\Models\ProductShared;
 use App\Models\Transaction;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -36,6 +38,11 @@ class PaymentService
     {
         DB::beginTransaction();
         try {
+            $user = User::query()
+                ->where('id', $userId ?? Auth::id())
+                ->lockForUpdate()
+                ->first();
+
             // get product detail and lockfor update
             $product = Product::where('id', $productId)->lockForUpdate()->first();
 
@@ -74,7 +81,7 @@ class PaymentService
             }
 
             $transaction = Transaction::create([
-                'user_id' => $userId ?? Auth::id(),
+                'user_id' => $user->id,
                 // 'invoice_number',
                 'total_price' => $totalOriginalPrice,
                 'total_discount' => $additionalDiscount,
@@ -137,7 +144,10 @@ class PaymentService
             }
 
             // check payment method
-            switch ($paymentMethod) {
+            $paymentMethodExplode = explode('|', $paymentMethod);
+            $paymentMethodIdentifier = $paymentMethodExplode[0];
+            $paymentMethodDetail = $paymentMethodExplode[1] ?? null;
+            switch ($paymentMethodIdentifier) {
                 case PaymentTypeEnum::TripayQris->value:
                     // call the tripay service
                     $tripayService = new TripayService();
@@ -149,7 +159,6 @@ class PaymentService
                     ], $invoiceNumber, $totalAmount);
 
                     if (!$response['success']) {
-                        Log::error($response['message']);
                         throw new \Exception('Error while connecting to payment gateway');
                     }
 
@@ -161,9 +170,32 @@ class PaymentService
                     ]);
                     break;
 
-                case 'Point':
-                    // do nothing lol
-                    // still need to implement the point system if needed
+                case PaymentTypeEnum::Point->value:
+                    // check user point if enough
+                    if ($user->point < $totalAmount) {
+                        throw new \Exception('User point is not enough');
+                    }
+
+                    // update the user point
+                    $user->update([
+                        'point' => $user->point - $totalAmount,
+                    ]);
+
+                    // update the transaction status to paid
+                    $transaction->update([
+                        'payment_status' => OrderStatusEnum::Paid,
+                        'paid_at' => now(),
+                    ]);
+
+                    // add history point
+                    $user->pointHistories()->create([
+                        'point' => $totalAmount,
+                        'type' => \App\Enums\PointHistoryTypeEnum::PAYMENT,
+                        'description' => 'Pembelian transaksi ' . $invoiceNumber,
+                    ]);
+
+                    // send items
+                    SendItemsJob::dispatch($transaction)->afterCommit();
                     break;
 
                 default:
