@@ -3,14 +3,11 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
@@ -24,10 +21,6 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'email',
         'password',
-        'phone',
-        'role',
-        'avatar',
-        'point'
     ];
 
     /**
@@ -50,27 +43,6 @@ class User extends Authenticatable implements FilamentUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'role' => \App\Enums\RoleEnum::class,
         ];
-    }
-
-    public function canAccessPanel(Panel $panel): bool
-    {
-        return $this->role === \App\Enums\RoleEnum::Admin;
-    }
-
-    public function carts()
-    {
-        return $this->hasMany(Cart::class);
-    }
-
-    public function transactions()
-    {
-        return $this->hasMany(Transaction::class);
-    }
-
-    public function hispointHistories()
-    {
-        return $this->hasMany(UserHistoryPoint::class);
     }
 }
