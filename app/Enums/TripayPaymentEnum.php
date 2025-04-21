@@ -12,7 +12,13 @@ enum TripayPaymentEnum: string
     {
         return match ($match) {
             self::QRISSHOPEEPAY->value => 'QRIS',
-            default => 'Unknown',
+        };
+    }
+
+    public static function getImage(string $match): string
+    {
+        return match ($match) {
+            self::QRISSHOPEEPAY->value => 'payment-images/qris.png',
         };
     }
 }
