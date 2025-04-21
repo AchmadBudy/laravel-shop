@@ -10,9 +10,9 @@ namespace App\DTOs;
 final readonly class TripayResponse
 {
     /**
-     * @param bool $success Indicates if the operation was successful.
-     * @param array<string, mixed>|null $response_body The actual response data or error details.
-     * @param string|null $message An optional message providing additional context.
+     * @param  bool  $success  Indicates if the operation was successful.
+     * @param  array<string, mixed>|null  $response_body  The actual response data or error details.
+     * @param  string|null  $message  An optional message providing additional context.
      */
     public function __construct(
         public bool $success,

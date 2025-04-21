@@ -9,16 +9,13 @@ use App\DTOs\Notif\NotifChannelResponseDTO;
 use App\Mail\NotifMail;
 use App\Settings\NotifSettings;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 final readonly class NotifServices
 {
     /**
      * NotifServices constructor.
-     * @param string $messages
-     * @param string $subject
-     * @param NotifSettings $notifSettings
      */
     public function __construct(
         private string $messages,
@@ -28,8 +25,6 @@ final readonly class NotifServices
 
     /**
      * Send all enabled notifications (Discord, Telegram, Email).
-     *
-     * @return NotifAllResponseDTO
      */
     public function sendAllNotification(): NotifAllResponseDTO
     {
@@ -43,6 +38,7 @@ final readonly class NotifServices
         if ($this->notifSettings->isEnableEmailMessage) {
             $response[] = $this->sendEmailMessage($this->messages, $this->subject);
         }
+
         return new NotifAllResponseDTO(
             data: $response,
         );
@@ -50,15 +46,12 @@ final readonly class NotifServices
 
     /**
      * Send Discord Message.
-     * @param string $messages
-     * @param string $subject
-     * @return NotifChannelResponseDTO
      */
     public function sendDiscordMessage(string $messages, string $subject): NotifChannelResponseDTO
     {
         try {
             // check if discord message is enabled
-            if (!$this->notifSettings->isEnableDiscordMessage) {
+            if (! $this->notifSettings->isEnableDiscordMessage) {
                 throw new \Exception('Discord message is not enabled');
             }
 
@@ -78,11 +71,13 @@ final readonly class NotifServices
                 Log::error('Failed to send message to Discord', ['response' => $response->body()]);
                 throw new \Exception('Failed to send message to Discord');
             }
+
             return new NotifChannelResponseDTO(
                 success: true,
             );
         } catch (\Throwable $th) {
             Log::error('Error sending Discord message', ['exception' => $th]);
+
             return new NotifChannelResponseDTO(
                 success: false,
                 errorMessage: $th->getMessage(),
@@ -92,15 +87,12 @@ final readonly class NotifServices
 
     /**
      * Send Email Message.
-     * @param string $messages
-     * @param string $subject
-     * @return NotifChannelResponseDTO
      */
     public function sendEmailMessage(string $messages, string $subject): NotifChannelResponseDTO
     {
         try {
             // check if email message is enabled
-            if (!$this->notifSettings->isEnableEmailMessage) {
+            if (! $this->notifSettings->isEnableEmailMessage) {
                 throw new \Exception('Email message is not enabled');
             }
 
@@ -108,11 +100,13 @@ final readonly class NotifServices
                 messages: $messages,
                 subject: $subject
             ));
+
             return new NotifChannelResponseDTO(
                 success: true,
             );
         } catch (\Throwable $th) {
             Log::error('Error sending Email message', ['exception' => $th]);
+
             return new NotifChannelResponseDTO(
                 success: false,
                 errorMessage: $th->getMessage(),
@@ -122,37 +116,36 @@ final readonly class NotifServices
 
     /**
      * Send Telegram Message.
-     * @param string $messages
-     * @param string $subject
-     * @return NotifChannelResponseDTO
      */
     public function sendTelegramMessage(string $messages, string $subject): NotifChannelResponseDTO
     {
         try {
             // check if telegram message is enabled
-            if (!$this->notifSettings->isEnableTelegramMessage) {
+            if (! $this->notifSettings->isEnableTelegramMessage) {
                 throw new \Exception('Telegram message is not enabled');
             }
 
-            $url = "https://api.telegram.org/bot" . $this->notifSettings->telegramBotToken . "/sendMessage";
+            $url = 'https://api.telegram.org/bot'.$this->notifSettings->telegramBotToken.'/sendMessage';
             // Escape special characters for MarkdownV2
-            $escape = fn($text) => preg_replace('/([_*\[\]()~`>#+\-=|{}.!])/', '\\\\$1', $text);
-            $formattedMessage = "*" . $escape($subject) . "*\n\n" . $escape($messages);
+            $escape = fn ($text) => preg_replace('/([_*\[\]()~`>#+\-=|{}.!])/', '\\\\$1', $text);
+            $formattedMessage = '*'.$escape($subject)."*\n\n".$escape($messages);
             $data = [
                 'chat_id' => $this->notifSettings->telegramChatId,
                 'text' => $formattedMessage,
-                'parse_mode' => 'MarkdownV2'
+                'parse_mode' => 'MarkdownV2',
             ];
             $response = Http::post($url, $data);
             if ($response->failed()) {
                 Log::error('Failed to send Telegram message', ['response' => $response->body()]);
                 throw new \Exception('Failed to send Telegram message');
             }
+
             return new NotifChannelResponseDTO(
                 success: true,
             );
         } catch (\Throwable $th) {
             Log::error('Error sending Telegram message', ['exception' => $th]);
+
             return new NotifChannelResponseDTO(
                 success: false,
                 errorMessage: $th->getMessage(),

@@ -11,14 +11,15 @@ use Illuminate\Support\Facades\Http;
 final readonly class TripayService
 {
     private readonly string $apiKey;
+
     private readonly string $privateKey;
+
     private readonly string $merchantCode;
+
     private readonly string $pathUrl;
+
     private readonly bool $isProduction;
 
-    /**
-     * 
-     */
     public function __construct()
     {
         $this->apiKey = config('tripay.api_key');
@@ -28,36 +29,24 @@ final readonly class TripayService
         $this->pathUrl = $this->isProduction ? 'https://tripay.co.id/api' : 'https://tripay.co.id/api-sandbox';
     }
 
-    /**
-     * @param int $amount
-     * @param string $merhcantRef
-     * 
-     * @return string
-     */
     private function getSignature(int $amount, string $merhcantRef): string
     {
-        return hash_hmac('sha256', $this->merchantCode . $merhcantRef . (string)$amount, $this->privateKey);
+        return hash_hmac('sha256', $this->merchantCode.$merhcantRef.(string) $amount, $this->privateKey);
     }
 
-    /**
-     * @return array
-     */
     private function getHeaders(): array
     {
-        return ['Authorization' => ' Bearer ' . $this->apiKey];
+        return ['Authorization' => ' Bearer '.$this->apiKey];
     }
-
 
     /**
      * Fetches available payment channels from Tripay.
-     * 
-     * @return TripayResponse
      */
     public function getChannels(): TripayResponse
     {
         try {
             $response = Http::withHeaders($this->getHeaders())
-                ->get($this->pathUrl . '/merchant/payment-channel');
+                ->get($this->pathUrl.'/merchant/payment-channel');
 
             return new TripayResponse(
                 success: $response->successful() && $response->json()['success'],
@@ -66,29 +55,23 @@ final readonly class TripayService
             );
         } catch (\Throwable $th) {
             // log error
-            logger('Error While Get Channels (GC001) : ' . $th->getMessage());
+            logger('Error While Get Channels (GC001) : '.$th->getMessage());
+
             return new TripayResponse(
                 success: false,
-                message: "Ups, something went wrong. CODE: GC001"
+                message: 'Ups, something went wrong. CODE: GC001'
             );
         }
     }
 
     /**
      * Create a payment request to Tripay.
-     * 
-     * @param int $amount
-     * @param string $merchantRef contains order number
-     * @param string $customerName
-     * @param string $customerEmail
-     * @param string $customerPhone
-     * @param TripayPaymentEnum $paymentMethodCode
+     *
+     * @param  string  $merchantRef  contains order number
      * @param array[
      *    'detailProduct' => Product,
      *    'quantity' => int
      * ] $products
-     * 
-     * @return TripayResponse
      */
     public function createPaymentRequest(
         int $amount,
@@ -101,32 +84,32 @@ final readonly class TripayService
     ): TripayResponse {
         try {
             $data = [
-                'method'         => $paymentMethodCode,
-                'merchant_ref'   => $merchantRef,
-                'amount'         => $amount,
-                'customer_name'  => $customerName,
+                'method' => $paymentMethodCode,
+                'merchant_ref' => $merchantRef,
+                'amount' => $amount,
+                'customer_name' => $customerName,
                 'customer_email' => $customerEmail,
                 'customer_phone' => $customerPhone,
                 'callback_url' => url('/api/tripay/callback'),
-                'return_url'   => route('order.detail', $merchantRef),
+                'return_url' => route('order.detail', $merchantRef),
                 'expired_time' => (time() + (24 * 60 * 60)), // 24 jam
-                'signature'    => $this->getSignature($amount, $merchantRef),
+                'signature' => $this->getSignature($amount, $merchantRef),
             ];
 
             $orderItems = [];
             foreach ($products as $product) {
                 $orderItems[] = [
-                    'name'        => $product['detailProduct']->name,
-                    'price'       => $product['detailProduct']->price,
-                    'quantity'    => $product['quantity'],
+                    'name' => $product['detailProduct']->name,
+                    'price' => $product['detailProduct']->price,
+                    'quantity' => $product['quantity'],
                     'product_url' => route('product.detail', $product['detailProduct']),
-                    'image_url'   => asset('storage/' . $product['detailProduct']->image),
+                    'image_url' => asset('storage/'.$product['detailProduct']->image),
                 ];
             }
             $data['order_items'] = $orderItems;
 
             $response = Http::withHeaders($this->getHeaders())
-                ->post($this->pathUrl . '/transaction/create', $data);
+                ->post($this->pathUrl.'/transaction/create', $data);
 
             return new TripayResponse(
                 success: $response->successful() && $response->json()['success'],
@@ -134,11 +117,12 @@ final readonly class TripayService
                 message: $response->body()['message']
             );
         } catch (\Throwable $th) {
-            //log error
-            logger('Error While Create Payment Request (CPR001) : ' . $th->getMessage());
+            // log error
+            logger('Error While Create Payment Request (CPR001) : '.$th->getMessage());
+
             return new TripayResponse(
                 success: false,
-                message: "Ups, something went wrong. CODE: CPR001"
+                message: 'Ups, something went wrong. CODE: CPR001'
             );
         }
     }
