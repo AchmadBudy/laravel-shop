@@ -8,17 +8,17 @@ enum TripayPaymentEnum: string
 {
     case QRISSHOPEEPAY = 'QRIS';
 
-    public static function getlabel(string $match): string
+    public function getlabel(): string
     {
-        return match ($match) {
-            self::QRISSHOPEEPAY->value => 'QRIS',
+        return match ($this) {
+            self::QRISSHOPEEPAY => 'QRIS',
         };
     }
 
-    public static function getImage(string $match): string
+    public function getImage(): string
     {
-        return match ($match) {
-            self::QRISSHOPEEPAY->value => 'payment-images/qris.png',
+        return match ($this) {
+            self::QRISSHOPEEPAY => 'payment-images/qris.png',
         };
     }
 }

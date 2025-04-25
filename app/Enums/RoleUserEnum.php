@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 declare(strict_types=1);
 
@@ -9,11 +9,11 @@ enum RoleUserEnum: string
     case ADMIN = 'admin';
     case USER = 'user';
 
-    public static function getLabel(string $match): string
+    public function getLabel(): string
     {
-        return match ($match) {
-            self::ADMIN->value => 'Admin',
-            self::USER->value => 'User',
+        return match ($this) {
+            self::ADMIN => 'Admin',
+            self::USER => 'User',
         };
     }
 }
