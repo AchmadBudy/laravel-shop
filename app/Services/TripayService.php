@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\DTOs\TripayResponse;
-use App\Enums\TripayPaymentEnum;
 use Illuminate\Support\Facades\Http;
 
 final readonly class TripayService
@@ -34,6 +33,11 @@ final readonly class TripayService
         return hash_hmac('sha256', $this->merchantCode.$merhcantRef.(string) $amount, $this->privateKey);
     }
 
+    /**
+     * Get headers for HTTP request.
+     *
+     * @return array<string, string>
+     */
     private function getHeaders(): array
     {
         return ['Authorization' => ' Bearer '.$this->apiKey];
@@ -48,10 +52,15 @@ final readonly class TripayService
             $response = Http::withHeaders($this->getHeaders())
                 ->get($this->pathUrl.'/merchant/payment-channel');
 
+            /**
+             * @var array<string, mixed>|null $resultJson
+             */
+            $resultJson = $response->json();
+
             return new TripayResponse(
-                success: $response->successful() && $response->json()['success'],
-                response_body: $response->json() ?? null,
-                message: $response->body()['message']
+                success: $response->successful() && $resultJson['success'],
+                response_body: $resultJson ?? null,
+                message: $resultJson['message']
             );
         } catch (\Throwable $th) {
             // log error
@@ -67,11 +76,10 @@ final readonly class TripayService
     /**
      * Create a payment request to Tripay.
      *
-     * @param  string  $merchantRef  contains order number
-     * @param array[
-     *    'detailProduct' => Product,
-     *    'quantity' => int
-     * ] $products
+     * @param array{
+     *  'detailProduct' : \App\Models\Product,
+     *  'quantity' : int
+     * } $products
      */
     public function createPaymentRequest(
         int $amount,
@@ -79,7 +87,7 @@ final readonly class TripayService
         string $customerName,
         string $customerEmail,
         string $customerPhone,
-        TripayPaymentEnum $paymentMethodCode,
+        string $paymentMethodCode,
         array $products
     ): TripayResponse {
         try {
@@ -111,10 +119,15 @@ final readonly class TripayService
             $response = Http::withHeaders($this->getHeaders())
                 ->post($this->pathUrl.'/transaction/create', $data);
 
+            /**
+             * @var array<string, mixed>|null $resultJson
+             */
+            $resultJson = $response->json();
+
             return new TripayResponse(
-                success: $response->successful() && $response->json()['success'],
-                response_body: $response->json() ?? null,
-                message: $response->body()['message']
+                success: $response->successful() && $resultJson['success'],
+                response_body: $resultJson ?? null,
+                message: $resultJson['message']
             );
         } catch (\Throwable $th) {
             // log error

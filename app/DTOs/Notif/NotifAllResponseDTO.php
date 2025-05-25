@@ -9,8 +9,7 @@ final readonly class NotifAllResponseDTO
     /**
      * Create a new class instance.
      *
-     * @param  bool  $success
-     * @param  array<ChannelResponseDTO>  $data
+     * @param  array<NotifChannelResponseDTO>  $data
      */
     public function __construct(
         private array $data,

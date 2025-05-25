@@ -98,7 +98,7 @@ final readonly class NotifServices
 
             Mail::to($this->notifSettings->emailTo)->send(new NotifMail(
                 messages: $messages,
-                subject: $subject
+                subjectMail: $subject
             ));
 
             return new NotifChannelResponseDTO(

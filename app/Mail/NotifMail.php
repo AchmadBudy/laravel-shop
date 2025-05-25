@@ -17,7 +17,7 @@ class NotifMail extends Mailable
      */
     public function __construct(
         private string $messages,
-        private string $subject
+        private string $subjectMail
     ) {
         //
     }
@@ -28,7 +28,7 @@ class NotifMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: $this->subject,
+            subject: $this->subjectMail,
         );
     }
 

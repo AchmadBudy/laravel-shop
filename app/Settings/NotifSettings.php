@@ -25,6 +25,9 @@ class NotifSettings extends Settings
         return 'notif';
     }
 
+    /**
+     * @return array<string>
+     */
     public static function encrypted(): array
     {
         return [
