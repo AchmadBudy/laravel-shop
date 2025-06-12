@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->string('image')->nullable();
             $table->text('description');
-            $table->bool('is_active')->default(true);
+            $table->boolean('is_active')->default(true);
             $table->integer('price');
             $table->integer('discounted_price')->nullable();
             $table->boolean('is_warranty_available')->default(false);
