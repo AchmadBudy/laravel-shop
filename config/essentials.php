@@ -62,7 +62,7 @@ return [
     |
     */
 
-    NunoMaduro\Essentials\Configurables\ForceScheme::class => env('APP_ENV') === 'production',
+    NunoMaduro\Essentials\Configurables\ForceScheme::class => false,
 
     /*
 
@@ -155,6 +155,6 @@ return [
     |
     */
 
-    NunoMaduro\Essentials\Configurables\Unguard::class => false,
+    NunoMaduro\Essentials\Configurables\Unguard::class => true,
 
 ];
