@@ -49,4 +49,9 @@ class User extends Authenticatable
             'balance' => 'integer',
         ];
     }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === RoleUserEnum::ADMIN;
+    }
 }
